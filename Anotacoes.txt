@@ -9,3 +9,8 @@ Passos para rodar:
     2º NPM install
     3º Fazer.env com as informações de conexão usadas no arquivo db.ts
     4º Rodar o arquivo de DUMP no banco
+
+
+COMANDOS
+[npx tsc] Gerar a pasta build com os arquivos JavaScript
+[node build/src/server.js] Rodar código

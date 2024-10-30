@@ -1,6 +1,5 @@
 import mysql, { ConnectionOptions } from 'mysql2';
 import dotenv from 'dotenv';
-//import { createClient } from 'redis';
 dotenv.config();
 
 const access: ConnectionOptions = {
@@ -10,7 +9,7 @@ const access: ConnectionOptions = {
     database: process.env.MYSQL_DATABASE
 };
 
-export const conn = mysql.createConnection(access);
+const conn = mysql.createConnection(access);
 
 conn.connect((err) => {
     if (err) {
@@ -18,18 +17,6 @@ conn.connect((err) => {
     } else {
         console.log('Conectado ao MySQL');
     }
+    // Encerra a conexão após o teste
+    conn.end();
 });
-
-// Conexão com Redis
-// const redisClient = createClient({
-//     url: `redis://${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`
-// });
-
-// (async () => {
-//     try {
-//         await redisClient.connect();
-//         console.log('Conectado ao Redis');
-//     } catch (err) {
-//         console.error('Erro ao conectar ao Redis:', err);
-//     }
-// })();
