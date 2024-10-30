@@ -28,7 +28,6 @@ export class ProductsRepository {
 
   create(p: Product): Promise<Product> {
     return new Promise((resolve, reject) => {
-      console.log(`Inserting product: name=${p.name}, price=${p.price}, description=${p.description}`); // Log da inserção
       conn.query<ResultSetHeader>(
         "INSERT INTO PRODUCTS (name, price, description) VALUES(?,?,?)",
         [p.name, p.price, p.description],
@@ -38,7 +37,6 @@ export class ProductsRepository {
             reject(err);
           }
           else
-            console.log("chegou aqui")
             this.getById(res.insertId)
               .then(user => resolve(user!))
               .catch(reject)
