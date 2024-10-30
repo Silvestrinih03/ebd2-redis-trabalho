@@ -28,12 +28,15 @@ export class ProductsRepository {
 
   create(p: Product): Promise<Product> {
     return new Promise((resolve, reject) => {
-      console.log("socorro")
+      console.log(`Inserting product: name=${p.name}, price=${p.price}, description=${p.description}`); // Log da inserção
       conn.query<ResultSetHeader>(
         "INSERT INTO PRODUCTS (name, price, description) VALUES(?,?,?)",
         [p.name, p.price, p.description],
         (err, res) => {
-          if (err) reject(err)
+          if (err) {//reject(err)
+            console.error('Erro na consulta:', err); // Adicione isto
+            reject(err);
+          }
           else
             console.log("chegou aqui")
             this.getById(res.insertId)

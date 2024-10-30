@@ -9,6 +9,8 @@ const routes = Router();
 
 const productsRepo = new ProductsRepository();
 
+app.use(express.json());
+
 routes.get('/', (req: Request, res: Response)=>{
     res.statusCode = 200;
     res.send("Funcionando...");
@@ -35,6 +37,7 @@ routes.get('/getProduct/:id', async (req: Request, res: Response) => {
 
 // Criar um novo produto
 routes.post('/createProduct', async (req: Request, res: Response) => {
+    console.log('Received body:', req.body);
     const newProduct: Product = req.body;
     try {
         const createdProduct = await productsRepo.create(newProduct);
