@@ -14,3 +14,11 @@ Passos para rodar:
 COMANDOS
 [npx tsc] Gerar a pasta build com os arquivos JavaScript
 [node build/src/server.js] Rodar código
+
+wsl -d Ubuntu
+
+sudo service redis-server start
+
+redis-cli
+
+ping
