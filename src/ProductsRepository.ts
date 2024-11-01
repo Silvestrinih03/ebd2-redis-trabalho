@@ -1,4 +1,3 @@
-import { ResultSetHeader } from "mysql2"
 import { conn } from "./db"
 import { Product } from "./product"
 import { redisClient } from "./db"
@@ -6,20 +5,26 @@ import { redisClient } from "./db"
 export class ProductsRepository {
 
   // Método para popular Redis
-  loadCache() {
+  async loadCache() {
     const query = 'SELECT * FROM PRODUCTS';
     
-    // Retrieve rows and metadata from the MySQL query
     conn.promise().execute(query).then(([rows]: any) => {
         for (const product of rows) {
-            redisClient.set(`product:${product.id}`, JSON.stringify(product));
+            const productId = product.ID; // ajuste conforme o nome correto da coluna
+            if (productId != null) {
+                redisClient.set(`product:${productId}`, JSON.stringify(product));
+            } else {
+                console.warn('Produto com ID nulo ou indefinido:', product);
+            }
         }
         console.log('Cache inicializado com todos os produtos.');
     }).catch(error => {
         console.error('Erro ao carregar o cache:', error);
     });
+    
   }
 
+  // Buscar todos os produtos no cache
   async getAll(): Promise<Product[]> {
     try {
         // Verifica se existem produtos armazenados no Redis
@@ -44,7 +49,7 @@ export class ProductsRepository {
             const pipeline = redisClient.multi();
             rows.forEach((product: Product) => {
                 // Adiciona cada produto ao Redis com a chave correta
-                pipeline.set(`product:${product.id}`, JSON.stringify(product));
+                pipeline.set(`product:${product.ID}`, JSON.stringify(product));
             });
             await pipeline.exec(); // Executa o pipeline para salvar no Redis
 
@@ -127,7 +132,6 @@ export class ProductsRepository {
 //   }
 // }
 
-  // AINDA TÁ ESQUISITAAAAAAAAAAAAAAAAAAAA
   delete(productId: number): Promise<number | null> {
     const query = 'DELETE FROM products WHERE id = ?';
 
