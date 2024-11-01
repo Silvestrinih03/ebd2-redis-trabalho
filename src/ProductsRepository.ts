@@ -40,7 +40,7 @@ export class ProductsRepository {
 
             const products = await Promise.all(productPromises);
             console.log('Produtos obtidos pelo cache:', products);
-            return products.sort((a: Product, b: Product) => a.ID - b.ID);;
+            return products.sort((a: Product, b: Product) => a.ID - b.ID);
         }
 
         // Se não houver produtos no cache, busca do MySQL
