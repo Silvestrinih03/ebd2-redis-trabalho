@@ -1,0 +1,55 @@
+GRUPO 4:
+    Júlia Dias              23975279
+    Marcela Franco          23013238
+    Nicole Silvestrini      23009486
+
+Passos para rodar:
+    1º Fazer um git clone
+    2º NPM install
+    3º Fazer.env com as informações de conexão usadas no arquivo db.ts
+        // Para o MySQL
+        MYSQL_HOST=localhost
+        MYSQL_USER=root
+        MYSQL_PASSWORD=suaSenha
+        MYSQL_DATABASE=mini_projeto_ebd2
+
+        // Para o Redis
+        REDIS_HOST=localhost
+        REDIS_PORT=6379
+    4º Rodar o arquivo de DUMP no banco MySQL
+    5º Garantir que Redis esteja conectado
+    
+    COMANDOS
+    [npx tsc] > Compilar os arquivos TypeScript do projeto para JavaScript
+    [node build/src/server.js] > Executar código
+    [wsl -d Ubuntu] > Inicia uma instância da distribuição Ubuntu no Windows Subsystem for Linux (WSL), permitindo que você execute comandos e scripts em um ambiente Linux.
+    [sudo service redis-server start] > Inicia o serviço do Redis no ambiente Linux (Ubuntu) 
+    [redis-cli] > Conecta-se ao cliente de linha de comando do Redis
+    [ping] > Verificar se a conexão com o servidor Redis está funcionando corretamente
+    [KEYS product:*] > Lista todas as chaves no Redis permitindo que você veja todos os registros de produtos armazenados
+    [FLUSHALL] > Limpa todos os dados em todos os bancos de dados do Redis, esvaziando completamente o cache Redis
+
+Relatório:
+    1. Visão Geral da Solução
+        Neste projeto, foi implementado um sistema de cache com Redis para otimizar o acesso a produtos em um banco de dados MySQL.
+        A solução visa melhorar a performance de consultas frequentes, reduzir a carga do banco de dados e garantir que os dados mais acessados estejam prontamente disponíveis.
+
+    2. Implementação Detalhada
+        Para implementar a solução, foi adicionada a conexão com o Redis em db.ts. 
+        Em seguida, os métodos existentes em ProductsRepository.ts foram atualizados para realizar consultas ao cache antes de acessar o MySQL:
+            a. Para iniciar o programa foi criada um mmétodo chamado loadCache()  que é responsável por pré-carregar todos os produtos do banco de dados MySQL para o Redis, permitindo que futuras consultas sejam atendidas pelo cache.
+            b. Método getAll() > Atualizada para verificar inicialmente se os produtos estão armazenados no cache. Se não estiverem, busca os dados do MySQL, atualiza o Redis e retorna os produtos.
+            c. Método getById() > Modificada para buscar o produto primeiro no Redis. Se não for encontrado, faz a consulta no MySQL, atualiza o cache e retorna o produto. Caso o produto não exista, retorna uma mensagem de "produto não encontrado".
+            d. Método create() > Agora, ao cadastrar um novo produto no MySQL, o produto é simultaneamente adicionado ao cache do Redis.
+            e. Método update() > Atualizada para que, após alterar os dados no MySQL, o cache do Redis também seja atualizado com as novas informações do produto.
+            f. Método delete() > Modificada para remover o produto do cache após ser excluído do MySQL.
+
+        Também foi necessário implementar as rotas para os métodos getById(), create(), update() e delete()
+
+    3. Problemas Não Resolvidos pela Solução
+        a. Sincronização em Tempo Real: Se houver alterações nos dados em sistemas externos que não atualizem o Redis diretamente, o cache pode ficar desatualizado.
+        b. Grande Volume de Dados: Em casos de sistemas com milhões de registros, o pré-carregamento de todos os dados no Redis pode consumir muita memória.
+
+    4. Resultados Observados
+        a. A busca por produtos através do Redis é significativamente mais rápida em comparação com consultas diretas ao MySQL.
+        b. A quantidade de querys direcionadas ao MySQL foi reduzida devido às consultas resolvidas pelo cache.
