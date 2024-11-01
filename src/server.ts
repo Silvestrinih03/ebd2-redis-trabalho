@@ -9,6 +9,8 @@ const routes = Router();
 
 const productsRepo = new ProductsRepository();
 
+productsRepo.loadCache();
+
 app.use(express.json());
 
 routes.get('/', (req: Request, res: Response)=>{
@@ -47,27 +49,28 @@ routes.post('/createProduct', async (req: Request, res: Response) => {
 });
 
 // Atualizar um produto
-routes.put('/updateProduct/:id', async (req: Request, res: Response) => {
-    const productId = parseInt(req.params.id);
-    const updatedProduct: Product = { id: productId, ...req.body };
-    try {
-        const product = await productsRepo.update(updatedProduct);
-        if (product) {
-            res.status(200).json(product);
-        } else {
-            res.status(404).send('Produto não encontrado');
-        }
-    } catch (error) {
-        res.status(500).send('Erro ao atualizar produto');
-    }
-});
+// routes.put('/updateProduct/:id', async (req: Request, res: Response) => {
+//     const productId = parseInt(req.params.id);
+//     const updatedProduct: Product = { id: productId, ...req.body };
+//     try {
+//         const product = await productsRepo.update(updatedProduct);
+//         if (product) {
+//             res.status(200).json(product);
+//         } else {
+//             res.status(404).send('Produto não encontrado');
+//         }
+//     } catch (error) {
+//         res.status(500).send('Erro ao atualizar produto');
+//     }
+// });
 
+// APAGAR ID 5 E ID 6
 // Deletar um produto
 routes.delete('/deleteProduct/:id', async (req: Request, res: Response) => {
     const productId = parseInt(req.params.id);
     try {
         const result = await productsRepo.delete(productId);
-        if (result > 0) {
+        if (result != null) {
             res.status(204).send(); // No Content
         } else {
             res.status(404).send('Produto não encontrado');

@@ -4,5 +4,5 @@ export interface Product extends RowDataPacket {
     id?: number
     name: string
     price: number
-    description: string 
+    description: string
 }
