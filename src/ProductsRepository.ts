@@ -39,7 +39,7 @@ export class ProductsRepository {
 
             const products = await Promise.all(productPromises);
             console.log('Produtos obtidos pelo cache:', products);
-            return products;
+            return products.sort((a: Product, b: Product) => a.ID - b.ID);;
         }
 
         // Se não houver produtos no cache, busca do MySQL
@@ -112,28 +112,29 @@ export class ProductsRepository {
     }
 }
 
-async update(product: Product): Promise<Product | undefined> {
-    const query = 'UPDATE PRODUCTS SET name = ?, price = ?, description = ? WHERE id = ?';
-    const values = [product.name, product.price, product.description, product.ID];
+    // Método para atualizar um produto
+    update(product: Product): Promise<Product | undefined> {
+        const query = 'UPDATE products SET name = ?, price = ?, description = ? WHERE id = ?';
+        const values = [product.name, product.price, product.description, product.id];
 
-    try {
-        const [result]: any = await conn.promise().execute(query, values);
-
-        if (result.affectedRows > 0) {
-            // Atualiza o produto no Redis
-            await redisClient.set(`product:${product.ID}`, JSON.stringify(product));
-            console.log('Produto atualizado no MySQL e cache:', product);
-            return product; // Retorna o produto atualizado
-        } else {
-            console.warn('Nenhum produto encontrado para atualização com ID:', product.ID);
-            return undefined; // Retorna undefined se nenhum produto foi atualizado
-        }
-    } catch (err) {
-        console.error('Erro ao atualizar produto:', err);
-        throw err; // Propaga o erro
+        return conn.promise().execute(query, values)
+            .then(([result]: any) => {
+                if (result.affectedRows > 0) {
+                    // Atualiza o produto no Redis
+                    redisClient.set(`product:${product.id}`, JSON.stringify(product));
+                    console.log('Produto atualizado no MySQL e cache:', product);
+                    return product;
+                } else {
+                    console.warn('Nenhum produto encontrado para atualização com ID:', product.id);
+                    return undefined; // Retorna undefined se nenhum produto foi encontrado
+                }
+            })
+            .catch((err) => {
+                console.error('Erro ao atualizar produto:', err);
+                throw err; // Propaga o erro para o chamador
+            });
     }
-}
-
+    
     delete(productId: number): Promise<number | null> {
         const query = 'DELETE FROM products WHERE id = ?';
 
