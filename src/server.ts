@@ -9,6 +9,7 @@ const routes = Router();
 
 const productsRepo = new ProductsRepository();
 
+// Chama o metodo para popular Redis no inicio do programa 
 productsRepo.loadCache();
 
 app.use(express.json());
@@ -18,7 +19,7 @@ routes.get('/', (req: Request, res: Response)=>{
     res.send("Funcionando...");
 });
 
-// obter todos os produtos.
+// Rota para chamar metodo getAll e obter todos os produtos.
 routes.get('/getAllProducts', async(req: Request, res: Response)=>{
     const products = await productsRepo.getAll();
     res.statusCode = 200; 
@@ -26,7 +27,7 @@ routes.get('/getAllProducts', async(req: Request, res: Response)=>{
     res.send(products);
 });
 
-// Obter produto por ID
+// Rota para chamar metodo getById e obter produto por ID
 routes.get('/getProduct/:id', async (req: Request, res: Response) => {
     const productId = parseInt(req.params.id);
     const product = await productsRepo.getById(productId);
@@ -37,7 +38,7 @@ routes.get('/getProduct/:id', async (req: Request, res: Response) => {
     }
 });
 
-// Criar um novo produto
+// Rota para chamar metodo create e adicionar um novo produto
 routes.post('/createProduct', async (req: Request, res: Response) => {
     const newProduct: Product = req.body;
     try {
@@ -48,7 +49,7 @@ routes.post('/createProduct', async (req: Request, res: Response) => {
     }
 });
 
-// Atualizar um produto
+// Rota para chamar metodo update e atualizar dados de um produto
 routes.put('/updateProduct/:id', async (req: Request, res: Response) => {
     const productId = parseInt(req.params.id);
     const updatedProduct: Product = { id: productId, ...req.body };
@@ -64,7 +65,7 @@ routes.put('/updateProduct/:id', async (req: Request, res: Response) => {
     }
 });
 
-// Deletar um produto
+// rota para chamar o metodo delete e deletar um produto
 routes.delete('/deleteProduct/:id', async (req: Request, res: Response) => {
     const productId = parseInt(req.params.id);
     try {

@@ -1,3 +1,4 @@
+// Criado apenas para testar a conexão com MySQL > O que está sendo utilizado para criar a conexão é o arquivo db.ts
 import mysql, { ConnectionOptions } from 'mysql2';
 import dotenv from 'dotenv';
 dotenv.config();

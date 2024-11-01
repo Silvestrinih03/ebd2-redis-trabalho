@@ -25,12 +25,13 @@ export class ProductsRepository {
     
   }
 
-  // Buscar todos os produtos no cache
+  // Buscar todos os produtos
   async getAll(): Promise<Product[]> {
     try {
         // Verifica se existem produtos armazenados no Redis
         const cachedProducts = await redisClient.keys('product:*');
         
+        // Listar produtos encontrados
         if (cachedProducts.length > 0) {
             const productPromises = cachedProducts.map(async (key) => {
                 const cachedProduct = await redisClient.get(key);
@@ -49,7 +50,7 @@ export class ProductsRepository {
         if (rows.length > 0) {
             const pipeline = redisClient.multi();
             rows.forEach((product: Product) => {
-                // Adiciona cada produto ao Redis com a chave correta
+                // Atualiza o Redis adicionando os produtos encontrados no MySQL
                 pipeline.set(`product:${product.ID}`, JSON.stringify(product));
             });
             await pipeline.exec(); // Executa o pipeline para salvar no Redis
@@ -65,55 +66,63 @@ export class ProductsRepository {
     }
   }
 
+  // Busca um produto pelo ID
    getById(productId: number): Promise<Product | null> {
+    // Verifica se o produto está armazenado no cache e retorna se encontra-lo
     return redisClient.get(`product:${productId}`).then((cachedProduct) => {
         if (cachedProduct) {
             console.log('Produto obtido do cache:', JSON.parse(cachedProduct));
             return JSON.parse(cachedProduct);
         }
 
+        // Se não encontrar o produto no cache realiza a busca no MySQL 
         const query = 'SELECT * FROM products WHERE id = ?';
         return conn.promise().execute(query, [productId]).then(([rows]: any) => {
+            // Se encontrar atualiza o cache e retorna o produto
             if (rows.length > 0) {
                 redisClient.set(`product:${productId}`, JSON.stringify(rows[0]));
                 console.log('Produto obtido do MySQL e cache atualizado:', rows[0]);
                 return rows[0];
             }
+            // Se não encontrar no MySQL retorna produto não encontrado
             return console.log('Produto não encontrado.');;
         });
     });
 }
 
-  async create(product: Product): Promise<Product> {
-    const query = 'INSERT INTO products (name, price, description) VALUES (?, ?, ?)';
-    const values = [product.name, product.price, product.description];
+    // Adicionar novos produtos
+    async create(product: Product): Promise<Product> {
+        // Insert MySQL
+        const query = 'INSERT INTO products (name, price, description) VALUES (?, ?, ?)';
+        const values = [product.name, product.price, product.description];
 
-    try {
-        // Aguarda a execução da consulta e obtém o resultado
-        const [result]: any = await conn.promise().execute(query, values);
-        
-        // O ID do novo produto é obtido a partir do resultado da inserção
-        const newProductId = result.insertId;
+        try {
+            // Aguarda a execução da consulta e obtém o resultado
+            const [result]: any = await conn.promise().execute(query, values);
+            
+            // O ID do novo produto é obtido a partir do resultado da inserção
+            const newProductId = result.insertId;
 
-        // Cria um novo objeto de produto com o ID gerado
-        const createdProduct = { ID: newProductId, ...product };
+            // Cria um novo objeto de produto com o ID gerado
+            const createdProduct = { ID: newProductId, ...product };
 
-        // Adiciona o produto ao Redis, usando o ID gerado
-        await redisClient.set(`product:${newProductId}`, JSON.stringify(createdProduct));
+            // Adiciona o produto ao Redis, usando o ID gerado
+            await redisClient.set(`product:${newProductId}`, JSON.stringify(createdProduct));
 
-        // Log para confirmar a adição ao cache
-        console.log('Produto adicionado e cache atualizado:', createdProduct);
+            // Log para confirmar a adição ao cache
+            console.log('Produto adicionado e cache atualizado:', createdProduct);
 
-        // Retorna o produto, incluindo o ID gerado
-        return createdProduct;
-    } catch (err) {
-        console.error('Erro ao adicionar produto:', err);
-        throw err;
+            // Retorna o produto, incluindo o ID gerado
+            return createdProduct;
+        } catch (err) {
+            console.error('Erro ao adicionar produto:', err);
+            throw err;
+        }
     }
-}
 
-    // Método para atualizar um produto
+    // Atualizar informacoes de um produto
     update(product: Product): Promise<Product | undefined> {
+        // Comando MySQL
         const query = 'UPDATE products SET name = ?, price = ?, description = ? WHERE id = ?';
         const values = [product.name, product.price, product.description, product.id];
 
@@ -135,7 +144,9 @@ export class ProductsRepository {
             });
     }
     
+    // Apagar produto
     delete(productId: number): Promise<number | null> {
+        // Comando MySQL 
         const query = 'DELETE FROM products WHERE id = ?';
 
         return conn.promise().execute(query, [productId])
