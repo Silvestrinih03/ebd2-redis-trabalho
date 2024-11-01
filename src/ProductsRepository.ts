@@ -10,7 +10,7 @@ export class ProductsRepository {
     
     conn.promise().execute(query).then(([rows]: any) => {
         for (const product of rows) {
-            const productId = product.ID; // ajuste conforme o nome correto da coluna
+            const productId = product.ID;
             if (productId != null) {
                 redisClient.set(`product:${productId}`, JSON.stringify(product));
             } else {
@@ -18,6 +18,7 @@ export class ProductsRepository {
             }
         }
         console.log('Cache inicializado com todos os produtos.');
+        //this.getAll();
     }).catch(error => {
         console.error('Erro ao carregar o cache:', error);
     });
@@ -78,7 +79,7 @@ export class ProductsRepository {
                 console.log('Produto obtido do MySQL e cache atualizado:', rows[0]);
                 return rows[0];
             }
-            return null;
+            return console.log('Produto não encontrado.');;
         });
     });
 }
@@ -111,52 +112,49 @@ export class ProductsRepository {
     }
 }
 
-// update(product: Product): Promise<Product | undefined> {
-//   try {
-//       const query = 'UPDATE products SET name = ?, price = ?, description = ? WHERE id = ?';
-//       const values = [product.name, product.price, product.description, product.id];
+async update(product: Product): Promise<Product | undefined> {
+    const query = 'UPDATE PRODUCTS SET name = ?, price = ?, description = ? WHERE id = ?';
+    const values = [product.name, product.price, product.description, product.ID];
 
-//       const [result]: any = conn.promise().execute(query, values);
-//       if (result.affectedRows > 0) {
-//           // Atualiza o produto no Redis
-//           redisClient.set(`product:${product.id}`, JSON.stringify(product));
-//           console.log('Produto atualizado no MySQL e cache:', product);
-//           return product;
-//       } else {
-//           console.warn('Nenhum produto encontrado para atualização com ID:', product.id);
-//           return undefined;
-//       }
-//   } catch (err) {
-//       console.error('Erro ao atualizar produto:', err);
-//       throw err;
-//   }
-// }
+    try {
+        const [result]: any = await conn.promise().execute(query, values);
 
-  delete(productId: number): Promise<number | null> {
-    const query = 'DELETE FROM products WHERE id = ?';
+        if (result.affectedRows > 0) {
+            // Atualiza o produto no Redis
+            await redisClient.set(`product:${product.ID}`, JSON.stringify(product));
+            console.log('Produto atualizado no MySQL e cache:', product);
+            return product; // Retorna o produto atualizado
+        } else {
+            console.warn('Nenhum produto encontrado para atualização com ID:', product.ID);
+            return undefined; // Retorna undefined se nenhum produto foi atualizado
+        }
+    } catch (err) {
+        console.error('Erro ao atualizar produto:', err);
+        throw err; // Propaga o erro
+    }
+}
 
-    return new Promise((resolve, reject) => {
-        conn.promise().execute(query, [productId])
+    delete(productId: number): Promise<number | null> {
+        const query = 'DELETE FROM products WHERE id = ?';
+
+        return conn.promise().execute(query, [productId])
             .then(([result]: any) => {
-                console.log('Produto removido do MySQL');
-
                 if (result.affectedRows > 0) {
-                    // Remove the product from Redis
-                    redisClient.del(`product:${productId}`).then(() => {
-                        resolve(productId);
-                    }).catch((err) => {
-                        console.error('Erro ao remover produto do Redis:', err);
-                        reject(err);
+                    console.log('Produto removido do MySQL!');
+                    
+                    // Remove o produto do Redis
+                    return redisClient.del(`product:${productId}`).then(() => {
+                        console.log('Produto removido do Redis!');
+                        return productId; // Retorna o ID do produto removido
                     });
                 } else {
                     console.warn('Nenhum produto encontrado para exclusão com ID:', productId);
-                    resolve(null);
+                    return null; // Retorna null se nenhum produto foi encontrado
                 }
             })
             .catch((err) => {
                 console.error('Erro ao deletar produto:', err);
-                reject(err);
+                throw err; // Propaga o erro para o chamador
             });
-    });
-  }
+    }
 }
